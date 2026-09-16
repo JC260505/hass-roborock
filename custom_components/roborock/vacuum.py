@@ -449,6 +449,29 @@ class RoborockQ7Vacuum(RoborockCoordinatedEntityB01Q7, StateVacuumEntity):
                 },
             ) from err
 
+    async def get_maps(self) -> ServiceResponse:
+        """Get map information such as map id and room ids."""
+        map_content_trait = self.coordinator.api.map_content
+        try:
+            await map_content_trait.refresh()
+        except RoborockException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="map_failure",
+            ) from err
+        if map_content_trait.map_data is None:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="map_failure",
+            )
+        rooms = map_content_trait.map_data.rooms or {}
+        return {
+            "rooms": {
+                segment_id: room.name or str(segment_id)
+                for segment_id, room in rooms.items()
+            }
+        }
+
 
 class RoborockQ10Vacuum(RoborockCoordinatedEntityB01Q10, StateVacuumEntity):
     """Representation of a Roborock Q10 vacuum."""
